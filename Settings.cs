@@ -12,11 +12,14 @@ namespace LiteMonitor
         public int PanelWidth { get; set; } = 240;   // ← 默认值与主题默认宽度一致
         public bool TopMost { get; set; } = true;
         public bool AutoStart { get; set; } = false;
-        public int RefreshMs { get; set; } = 300;
+        public int RefreshMs { get; set; } = 300; //刷新时间
+        // ★ 新增字段
+        public double AnimationSpeed { get; set; } = 0.35; // 平滑速度：0~1，0.3~0.5推荐
+
         public Point Position { get; set; } = new Point(-1, -1);
 
         // ====== 新增：用户偏好（从主题里迁移出来的 & 新功能需要） ======
-        public double Opacity { get; set; } = 0.95;   // ← 窗口透明度（原 theme.window.opacity）
+        public double Opacity { get; set; } = 0.85;   // ← 窗口透明度（原 theme.window.opacity）
         public string Language { get; set; } = "zh";  // ← 语言：zh / en（对应 zh.json / en.json）
         public bool ClickThrough { get; set; } = false; // ← 鼠标穿透
         public bool AutoHide { get; set; } = false;     // ← 靠边自动隐藏

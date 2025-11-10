@@ -108,13 +108,12 @@ namespace LiteMonitor
             string sysLang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
             string langPath = Path.Combine(AppContext.BaseDirectory, "lang", $"{sysLang}.json");
             _cfg.Language = File.Exists(langPath) ? sysLang : "en";
-            LanguageManager.Load(_cfg.Language);
 
-            ThemeManager.Load(_cfg.Skin);
-            var theme = ThemeManager.Current;
-            theme.BuildFonts();
-            // 这里使用从设置读取的宽度
-            Width = _cfg.PanelWidth > 100 ? _cfg.PanelWidth : ThemeManager.Current.Layout.Width;
+            // 语言与主题的加载交给 UIController.ApplyTheme 统一处理
+
+            // 宽度只认 Settings；真正的主题宽度覆盖在 UIController.ApplyTheme 内执行
+            Width = _cfg.PanelWidth > 100 ? _cfg.PanelWidth : Width;
+
 
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
@@ -123,17 +122,28 @@ namespace LiteMonitor
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             AutoScaleMode = AutoScaleMode.Dpi;
 
-            BackColor = ThemeManager.ParseColor(theme.Color.Background);
-
-            _tray.Icon = new Icon("assets/app.ico");
+            // === 托盘图标设置（防止图标文件缺失） ===
+            try
+            {
+                _tray.Icon = File.Exists("assets/app.ico") ? new Icon("assets/app.ico") : SystemIcons.Application;
+            }
+            catch
+            {
+                _tray.Icon = SystemIcons.Application;
+            }
             _tray.Visible = true;
-            _tray.Text = "Mini Hardware Monitor Pro";
+            _tray.Text = "LiteMonitor";
             this.Icon = _tray.Icon;
+
+            // 将 _cfg 传递给 UIController（构造内会统一加载语言与主题，并应用宽度等）
+            _ui = new UIController(_cfg, this);
+
+            // 现在主题已可用，再设置背景色与菜单
+            BackColor = ThemeManager.ParseColor(ThemeManager.Current.Color.Background);
+
             _tray.ContextMenuStrip = BuildContextMenu();
             ContextMenuStrip = _tray.ContextMenuStrip;
 
-            // 将 _cfg 传递给 UIController 和 UILayout
-            _ui = new UIController(_cfg, this);
 
             // === 拖拽移动 ===
             MouseDown += (_, e) =>
@@ -263,14 +273,16 @@ namespace LiteMonitor
             AddToggle("Items.GPU.Temp", () => _cfg.Enabled.GpuTemp, v => _cfg.Enabled.GpuTemp = v);
             AddToggle("Items.GPU.VRAM", () => _cfg.Enabled.GpuVram, v => _cfg.Enabled.GpuVram = v);
             AddToggle("Items.MEM.Load", () => _cfg.Enabled.MemLoad, v => _cfg.Enabled.MemLoad = v);
+
             // 整组控制（推荐写法，最简）
-            AddToggle(LanguageManager.T("Groups.DISK"),
+            AddToggle("Groups.DISK",
                 () => _cfg.Enabled.DiskRead || _cfg.Enabled.DiskWrite,
                 v => { _cfg.Enabled.DiskRead = v; _cfg.Enabled.DiskWrite = v; });
 
-            AddToggle(LanguageManager.T("Groups.NET"),
+            AddToggle("Groups.NET",
                 () => _cfg.Enabled.NetUp || _cfg.Enabled.NetDown,
                 v => { _cfg.Enabled.NetUp = v; _cfg.Enabled.NetDown = v; });
+
 
             // === 主题 ===
             var themeRoot = new ToolStripMenuItem(LanguageManager.T("Menu.Theme"));
@@ -338,14 +350,11 @@ namespace LiteMonitor
                     _cfg.PanelWidth = w;
                     _cfg.Save();
 
-                    // 2) 立即应用到主题与窗体（保证 UILayout 的计算基于同一宽度）
-                    ThemeManager.Current.Layout.Width = w;
-                    this.Width = w;
-
-                    // 3) 刷新布局（ApplyTheme 内部会再次用 _cfg 覆盖 layout 宽度，确保一致）
+                    // 2) 统一入口：交给 ApplyTheme 按 Settings 覆盖主题宽度并刷新布局
                     _ui?.ApplyTheme(_cfg.Skin);
 
-                    // 4) 同步菜单勾选
+
+                    // 3) 同步菜单勾选
                     foreach (ToolStripMenuItem other in widthRoot.DropDownItems) other.Checked = false;
                     widthItem.Checked = true;
                 };
@@ -377,10 +386,7 @@ namespace LiteMonitor
                         _cfg.Language = code;
                         _cfg.Save();
 
-                        // 加载新语言
-                        LanguageManager.Load(code);
-
-                        // 刷新 UI
+                        // 统一入口：ApplyTheme 内部加载语言与主题
                         _ui?.ApplyTheme(_cfg.Skin);
                         Invalidate();
 

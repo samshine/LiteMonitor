@@ -28,22 +28,21 @@ namespace LiteMonitor
             _timer.Tick += (_, __) => Tick();
             _timer.Start();
 
-            // 初始化语言与主题
-            LanguageManager.Load(cfg.Language);
+            // 初始化主题与语言的唯一入口
             ApplyTheme(cfg.Skin);
         }
 
         // ========== 主题切换 ==========
         public void ApplyTheme(string name)
         {
+            // 语言 + 主题的唯一入口
+            LanguageManager.Load(_cfg.Language);
             ThemeManager.Load(name);
-            var t = ThemeManager.Current;
 
-            // 性能模式：关闭动画（必要时你也可以自行把毛玻璃关掉）
-            if (t.Behavior.PerformanceMode)
-            {
-                t.Layout.AnimationSpeed = 1.0;     // 动画全关闭（即时刷新）
-            }
+            // 换主题需清理绘制缓存（第③步会新增该方法）
+            UIRenderer.ClearCache();
+
+            var t = ThemeManager.Current;
 
             // ✅ 修复点：同步主题宽度或设置的面板宽度
             if (_cfg.PanelWidth > 100)
@@ -89,18 +88,26 @@ namespace LiteMonitor
             if (_dragging || _busy) return;
             _busy = true;
 
-            await System.Threading.Tasks.Task.Run(() => _mon.UpdateAll());
+            try
+            {
+                await System.Threading.Tasks.Task.Run(() => _mon.UpdateAll());
 
-            foreach (var g in _groups)
-                foreach (var it in g.Items)
-                {
-                    it.Value = _mon.Get(it.Key);
-                    it.TickSmooth(ThemeManager.Current.Layout.AnimationSpeed);
-                }
+                foreach (var g in _groups)
+                    foreach (var it in g.Items)
+                    {
+                        it.Value = _mon.Get(it.Key);
 
-            _form.Invalidate();
-            _busy = false;
+                        it.TickSmooth(_cfg.AnimationSpeed);
+                    }
+
+                _form.Invalidate();
+            }
+            finally
+            {
+                _busy = false;
+            }
         }
+
 
         // ========== 动态构建分组与项目 ==========
         private void BuildMetrics()
@@ -153,17 +160,6 @@ namespace LiteMonitor
             if (netItems.Count > 0)
                 _groups.Add(new GroupLayoutInfo("NET", netItems));
 
-            // === 构建布局 ===
-            _layout ??= new UILayout(t);
-            if (_layoutDirty)
-            {
-                _layout.Build(_groups);
-                _layoutDirty = false;
-
-                int totalH = 0;
-                foreach (var g in _groups) totalH = Math.Max(totalH, g.Bounds.Bottom);
-                _form.Height = totalH + t.Layout.Padding;
-            }
         }
 
         // ========== 绘制接口 ==========
@@ -174,15 +170,13 @@ namespace LiteMonitor
 
             if (_layoutDirty)
             {
-                _layout.Build(_groups);
+                int contentH = _layout.Build(_groups);   // ← Build 返回内容高度
                 _layoutDirty = false;
-
-                int totalH = 0;
-                foreach (var gr in _groups) totalH = Math.Max(totalH, gr.Bounds.Bottom);
-                _form.Height = totalH + t.Layout.Padding;
+                _form.Height = contentH + t.Layout.Padding;
             }
 
             UIRenderer.Render(g, _groups, t);
+
         }
 
         // ========== 清理 ==========

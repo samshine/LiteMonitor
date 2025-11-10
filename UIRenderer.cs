@@ -12,6 +12,16 @@ namespace LiteMonitor
         // ========== Brush Cache ==========
         private static readonly Dictionary<int, SolidBrush> _brushCache = new();
 
+        public static void ClearCache()
+        {
+            try
+            {
+                foreach (var b in _brushCache.Values) b.Dispose();
+            }
+            catch { }
+            _brushCache.Clear();
+        }
+
         private static SolidBrush GetBrush(Color c)
         {
             int key = c.ToArgb();
