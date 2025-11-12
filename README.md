@@ -1,6 +1,6 @@
 [English](./README.en.md)
 
-# <img src="./screenshots/logo.png"  width="28" style="vertical-align: middle; margin-top: -4px;" /> LiteMonitor
+# <img src="./resources/screenshots/logo.png"  width="28" style="vertical-align: middle; margin-top: -4px;" /> LiteMonitor
 轻量、可定制的桌面硬件监控工具 — 实时监测 CPU、GPU、内存、磁盘、网络等系统性能。
 
 > 🟢 **立即下载最新版本：** [📦 GitHub Releases → LiteMonitor 最新版](https://github.com/Diorser/LiteMonitor/releases/latest)
@@ -8,7 +8,7 @@
 LiteMonitor 是一款基于 **Windows** 的现代化桌面系统监控工具。  
 支持多语言界面、主题切换、透明度显示、三级色值报警，界面简洁且高度可配置。
 
-![LiteMonitor 主界面](./screenshots/overview.png)
+![LiteMonitor 主界面](./resources/screenshots/overview.png)
 
 ---
 

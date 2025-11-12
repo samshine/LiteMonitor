@@ -169,7 +169,7 @@ namespace LiteMonitor
         {
             get
             {
-                var dir = Path.Combine(AppContext.BaseDirectory, "themes");
+                var dir = Path.Combine(AppContext.BaseDirectory, "resources/themes");
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                 return dir;
             }

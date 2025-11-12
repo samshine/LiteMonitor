@@ -106,7 +106,7 @@ namespace LiteMonitor
         {
             // === 自动检测系统语言 ===
             string sysLang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
-            string langPath = Path.Combine(AppContext.BaseDirectory, "lang", $"{sysLang}.json");
+            string langPath = Path.Combine(AppContext.BaseDirectory, "resources/lang", $"{sysLang}.json");
             _cfg.Language = File.Exists(langPath) ? sysLang : "en";
 
             // 语言与主题的加载交给 UIController.ApplyTheme 统一处理
@@ -125,7 +125,7 @@ namespace LiteMonitor
             // === 托盘图标设置（防止图标文件缺失） ===
             try
             {
-                _tray.Icon = File.Exists("assets/app.ico") ? new Icon("assets/app.ico") : SystemIcons.Application;
+                _tray.Icon = File.Exists("resources/assets/app.ico") ? new Icon("resources/assets/app.ico") : SystemIcons.Application;
             }
             catch
             {
@@ -201,12 +201,25 @@ namespace LiteMonitor
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            var area = Screen.PrimaryScreen!.WorkingArea;
+
+            // 确保窗体尺寸已初始化
+            this.Update();
+
+            var screen = Screen.FromControl(this);
+            var area = screen.WorkingArea;
+
             if (_cfg.Position.X >= 0)
+            {
                 Location = _cfg.Position;
+            }
             else
-                Location = new Point(area.Right - Width - 10, area.Top + (area.Height - Height) / 2);
+            {
+                int x = area.Right - Width - 50; // 距右边留白
+                int y = area.Top + (area.Height - Height) / 2; // 垂直居中
+                Location = new Point(x, y);
+            }
         }
+
 
         protected override void OnPaint(PaintEventArgs e) => _ui?.Render(e.Graphics);
 
@@ -371,7 +384,7 @@ namespace LiteMonitor
 
             // === 语言切换 ===
             var langRoot = new ToolStripMenuItem(LanguageManager.T("Menu.Language"));
-            var langDir = Path.Combine(AppContext.BaseDirectory, "lang");
+            var langDir = Path.Combine(AppContext.BaseDirectory, "resources/lang");
             if (Directory.Exists(langDir))
             {
                 foreach (var file in Directory.EnumerateFiles(langDir, "*.json"))

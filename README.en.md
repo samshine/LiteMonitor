@@ -1,7 +1,7 @@
 [中文文档](./README.md)
 
 
-# <img src="./screenshots/logo.png"  width="28" style="vertical-align: middle; margin-top: -4px;" /> LiteMonitor
+# <img src="./resources/screenshots/logo.png"  width="28" style="vertical-align: middle; margin-top: -4px;" /> LiteMonitor
 
 A lightweight and customizable **Windows hardware monitor** — track your CPU, GPU, memory, disk, and network stats in real time.
 
@@ -10,7 +10,7 @@ A lightweight and customizable **Windows hardware monitor** — track your CPU, 
 LiteMonitor is a modern **Windows-based desktop system monitor**,  
 featuring multilingual interface, theme switching, adjustable transparency, and a three-level color alert system — all within a clean and highly customizable UI.
 
-![LiteMonitor Overview](./screenshots/overview.png)
+![LiteMonitor Overview](./resources/screenshots/overview.png)
 
 ---
 

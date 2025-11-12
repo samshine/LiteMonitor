@@ -14,7 +14,7 @@ namespace LiteMonitor
         {
             get
             {
-                var dir = Path.Combine(AppContext.BaseDirectory, "lang");
+                var dir = Path.Combine(AppContext.BaseDirectory, "resources/lang");
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                 return dir;
             }
