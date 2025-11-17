@@ -16,6 +16,23 @@ namespace LiteMonitor
         private readonly NotifyIcon _tray = new();
         private Point _dragOffset;
 
+        // 防止 Win11 自动隐藏无边框 + 无任务栏窗口
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var cp = base.CreateParams;
+
+                // WS_EX_TOOLWINDOW: 防止被系统降为后台工具窗口 → 解决“失焦后自动消失”
+                cp.ExStyle |= 0x00000080;
+
+                // 可选：避免 Win11 某些情况错误认为是 AppWindow
+                cp.ExStyle &= ~0x00040000; // WS_EX_APPWINDOW
+
+                return cp;
+            }
+        }
+
         // ========== 鼠标穿透支持 ==========
         [DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
