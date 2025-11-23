@@ -14,7 +14,7 @@ It supports horizontal/vertical display, multiple languages, theme switching, tr
 ![LiteMonitor Horizontal](./resources/screenshots/overview1.png)
 ![LiteMonitor Main UI](./resources/screenshots/overview.png)
 
-> 🟢 **New Theme Editor**
+###  🟢 **New Theme Editor**
 ![LiteMonitor Theme Editor](./resources/screenshots/overview2.jpg)
 
 ---
