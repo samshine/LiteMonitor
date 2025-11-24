@@ -42,9 +42,25 @@ namespace LiteMonitor.ThemeEditor
         {
             Text = "LiteMonitor Theme Editor";
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(1050, 720);
-            Width = 1050;
-            Height = 720;
+            
+            // DPI 缩放支持
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(96F, 96F);
+            
+            // 基础尺寸（96 DPI 下的尺寸）
+            int baseWidth = 1050;
+            int baseHeight = 720;
+            
+            // 计算 DPI 缩放后的尺寸
+            using (Graphics g = CreateGraphics())
+            {
+                float dpiScaleX = g.DpiX / 96f;
+                float dpiScaleY = g.DpiY / 96f;
+                
+                Width = (int)(baseWidth * dpiScaleX);
+                Height = (int)(baseHeight * dpiScaleY);
+                MinimumSize = new Size((int)(baseWidth * dpiScaleX), (int)(baseHeight * dpiScaleY));
+            }
 
             DoubleBuffered = true;
 
@@ -59,12 +75,15 @@ namespace LiteMonitor.ThemeEditor
         // ============================================================
         private void BuildUI()
         {
+            // 获取 DPI 缩放比例
+            float dpiScale = GetDpiScale();
+            
             // ------------- 中间：TabControl -------------
             tab = new TabControl
             {
                 Dock = DockStyle.Fill,
                 Alignment = TabAlignment.Top,
-                Font = new Font("Microsoft YaHei UI", 10)
+                Font = new Font("Microsoft YaHei UI", 10) // 字体自动 DPI 缩放
             };
             
             pageLayout = new Panel { AutoScroll = true, Dock = DockStyle.Fill };
@@ -97,7 +116,7 @@ namespace LiteMonitor.ThemeEditor
             preview = new ThemePreviewControl
             {
                 Dock = DockStyle.Right,
-                Width = (int)(this.Width / 3.0),
+                Width = (int)((this.Width / 3.0) * dpiScale),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
@@ -106,35 +125,35 @@ namespace LiteMonitor.ThemeEditor
             var leftPanel = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 220,
-                Padding = new Padding(10),
+                Width = (int)(220 * dpiScale),
+                Padding = new Padding((int)(10 * dpiScale)),
                 BackColor = Color.WhiteSmoke
             };
             
             lstThemes = new ListBox
             {
                 Dock = DockStyle.Top,
-                Height = 500,
-                Font = new Font("Microsoft YaHei UI", 10),
+                Height = (int)(500 * dpiScale),
+                Font = new Font("Microsoft YaHei UI", 10), // 字体自动 DPI 缩放
             };
             lstThemes.SelectedIndexChanged += (_, __) => LoadSelectedTheme();
             leftPanel.Controls.Add(lstThemes);
 
             
-            btnDelete = new Button { Text = "删除主题 / Delete Theme", Dock = DockStyle.Top, Height = 40 };
+            btnDelete = new Button { Text = "删除主题 / Delete Theme", Dock = DockStyle.Top, Height = (int)(40 * dpiScale) };
             btnDelete.Click += (_, __) => CmdDeleteTheme();
             leftPanel.Controls.Add(btnDelete);
 
-            btnCopy = new Button { Text = "复制主题 / Copy Theme", Dock = DockStyle.Top, Height = 40 };
+            btnCopy = new Button { Text = "复制主题 / Copy Theme", Dock = DockStyle.Top, Height = (int)(40 * dpiScale) };
             btnCopy.Click += (_, __) => CmdCopyTheme();
             leftPanel.Controls.Add(btnCopy);
 
-            btnRename = new Button { Text = "重命名主题 / Rename Theme", Dock = DockStyle.Top, Height = 40 };
+            btnRename = new Button { Text = "重命名主题 / Rename Theme", Dock = DockStyle.Top, Height = (int)(40 * dpiScale) };
             btnRename.Click += (_, __) => CmdRenameTheme();
             leftPanel.Controls.Add(btnRename);
 
              
-            btnNew = new Button { Text = "新建主题 / New Theme", Dock = DockStyle.Top, Height = 40 };
+            btnNew = new Button { Text = "新建主题 / New Theme", Dock = DockStyle.Top, Height = (int)(40 * dpiScale) };
             btnNew.Click += (_, __) => CmdNewTheme();
             leftPanel.Controls.Add(btnNew);
             
@@ -147,8 +166,8 @@ namespace LiteMonitor.ThemeEditor
             void UpdatePreviewWidth()
             {
                 // 计算预览区域宽度，留出左侧面板和中间选项卡的空间
-                int remainingWidth = this.Width - leftPanel.Width - 20; // 减去左侧面板宽度和一些边距
-                preview.Width = Math.Max(300, remainingWidth / 3); // 确保最小宽度为300
+                int remainingWidth = this.Width - leftPanel.Width - (int)(20 * dpiScale); // 减去左侧面板宽度和一些边距
+                preview.Width = Math.Max((int)(240 * dpiScale), remainingWidth / 3); // 确保最小宽度为240
             }
             
             // 初始化时设置宽度
@@ -172,6 +191,17 @@ namespace LiteMonitor.ThemeEditor
 
             if (lstThemes.Items.Count > 0)
                 lstThemes.SelectedIndex = 0;
+        }
+
+        // ============================================================
+        // 获取 DPI 缩放比例
+        // ============================================================
+        private float GetDpiScale()
+        {
+            using (Graphics g = CreateGraphics())
+            {
+                return g.DpiX / 96f;
+            }
         }
 
         // ============================================================
@@ -209,21 +239,22 @@ namespace LiteMonitor.ThemeEditor
             pageLayout.Controls.Clear();
             if (_theme == null) return;
 
-            int y = 10;
+            float dpiScale = GetDpiScale();
+            int y = (int)(10 * dpiScale);
 
             NumericUpDown AddNum(string label, Func<int> get, Action<int> set)
             {
                 pageLayout.Controls.Add(new Label
                 {
                     Text = label,
-                    Location = new Point(10, y + 4),
-                    Width = 200
+                    Location = new Point((int)(10 * dpiScale), y + (int)(4 * dpiScale)),
+                    Width = (int)(200 * dpiScale)
                 });
 
                 var n = new NumericUpDown
                 {
-                    Location = new Point(220, y),
-                    Width = 100,
+                    Location = new Point((int)(220 * dpiScale), y),
+                    Width = (int)(100 * dpiScale),
                     Minimum = 0,
                     Maximum = 2000,
                     Value = get()
@@ -231,7 +262,7 @@ namespace LiteMonitor.ThemeEditor
                 n.ValueChanged += (_, __) => { set((int)n.Value); preview.SetTheme(_theme!); };
                 pageLayout.Controls.Add(n);
 
-                y += 36;
+                y += (int)(36 * dpiScale);
                 return n;
             }
 
@@ -260,7 +291,8 @@ namespace LiteMonitor.ThemeEditor
             pageFont.Controls.Clear();
             if (_theme == null) return;
 
-            int y = 10;
+            float dpiScale = GetDpiScale();
+            int y = (int)(10 * dpiScale);
 
             // 系统字体
             var fonts = _fontCollection.Families.Select(f => f.Name).OrderBy(n => n).ToList();
@@ -270,14 +302,14 @@ namespace LiteMonitor.ThemeEditor
                 pageFont.Controls.Add(new Label
                 {
                     Text = label,
-                    Location = new Point(10, y + 4),
-                    Width = 180
+                    Location = new Point((int)(10 * dpiScale), y + (int)(4 * dpiScale)),
+                    Width = (int)(180 * dpiScale)
                 });
 
                 var combo = new ComboBox
                 {
-                    Location = new Point(200, y),
-                    Width = 180,
+                    Location = new Point((int)(200 * dpiScale), y),
+                    Width = (int)(180 * dpiScale),
                     DropDownStyle = ComboBoxStyle.DropDownList
                 };
 
@@ -291,7 +323,7 @@ namespace LiteMonitor.ThemeEditor
                 };
 
                 pageFont.Controls.Add(combo);
-                y += 36;
+                y += (int)(36 * dpiScale);
 
                 return combo;
             }
@@ -301,14 +333,14 @@ namespace LiteMonitor.ThemeEditor
                 pageFont.Controls.Add(new Label
                 {
                     Text = label,
-                    Location = new Point(10, y + 4),
-                    Width = 180
+                    Location = new Point((int)(10 * dpiScale), y + (int)(4 * dpiScale)),
+                    Width = (int)(180 * dpiScale)
                 });
 
                 var n = new NumericUpDown
                 {
-                    Location = new Point(200, y),
-                    Width = 150,
+                    Location = new Point((int)(200 * dpiScale), y),
+                    Width = (int)(150 * dpiScale),
                     Minimum = 8,
                     Maximum = 72,
                     Value = (decimal)get()
@@ -321,7 +353,7 @@ namespace LiteMonitor.ThemeEditor
                 };
                 pageFont.Controls.Add(n);
 
-                y += 36;
+                y += (int)(36 * dpiScale);
                 return n;
             }
 
@@ -338,7 +370,7 @@ namespace LiteMonitor.ThemeEditor
             var chkBold = new CheckBox
             {
                 Text = "加粗 / Bold",   
-                Location = new Point(10, y),
+                Location = new Point((int)(10 * dpiScale), y),
                 Checked = F.Bold
             };
             chkBold.CheckedChanged += (_, __) =>
@@ -349,7 +381,7 @@ namespace LiteMonitor.ThemeEditor
             };
             pageFont.Controls.Add(chkBold);
 
-            y += 40;
+            y += (int)(40 * dpiScale);
 
             AddSaveButton(pageFont);
         }
@@ -363,15 +395,16 @@ namespace LiteMonitor.ThemeEditor
             pageColors.Controls.Clear();
             if (_theme == null) return;
 
-            int y = 10;
+            float dpiScale = GetDpiScale();
+            int y = (int)(10 * dpiScale);
 
             Button AddColor(string label, Func<string> get, Action<string> set)
             {
                 pageColors.Controls.Add(new Label
                 {
                     Text = label,
-                    Location = new Point(10, y + 6),
-                    Width = 210
+                    Location = new Point((int)(10 * dpiScale), y + (int)(6 * dpiScale)),
+                    Width = (int)(210 * dpiScale)
                 });
 
                 // 获取当前颜色
@@ -383,9 +416,9 @@ namespace LiteMonitor.ThemeEditor
                 
                 var btn = new Button
                 {
-                    Location = new Point(220, y),
-                    Width = 120,
-                    Height = 30, // 稍微增加高度
+                    Location = new Point((int)(220 * dpiScale), y),
+                    Width = (int)(120 * dpiScale),
+                    Height = (int)(30 * dpiScale), // 稍微增加高度
                     Text = get(),
                     BackColor = currentColor, // 设置按钮背景色为当前颜色
                     ForeColor = textColor // 根据背景亮度设置文字颜色
@@ -417,7 +450,7 @@ namespace LiteMonitor.ThemeEditor
 
                 pageColors.Controls.Add(btn);
 
-                y += 45; // 增加垂直间距以适应更高的按钮
+                y += (int)(45 * dpiScale); // 增加垂直间距以适应更高的按钮
                 return btn;
             }
 
@@ -451,21 +484,22 @@ namespace LiteMonitor.ThemeEditor
             pageThreshold.Controls.Clear();
             if (_theme == null) return;
 
-            int y = 10;
+            float dpiScale = GetDpiScale();
+            int y = (int)(10 * dpiScale);
 
             void AddPair(string name, Func<double> gw, Func<double> gc, Action<double> sw, Action<double> sc)
             {
                 pageThreshold.Controls.Add(new Label
                 {
                     Text = name,
-                    Location = new Point(10, y + 6),
-                    Width = 200
+                    Location = new Point((int)(10 * dpiScale), y + (int)(6 * dpiScale)),
+                    Width = (int)(250 * dpiScale) // 增加宽度以完整显示字段名称
                 });
 
                 var warn = new NumericUpDown
                 {
-                    Location = new Point(220, y),
-                    Width = 80,
+                    Location = new Point((int)(270 * dpiScale), y), // 调整位置以适应更宽的标签
+                    Width = (int)(80 * dpiScale),
                     DecimalPlaces = 0,
                     Maximum = 9999,
                     Value = (decimal)gw()
@@ -475,8 +509,8 @@ namespace LiteMonitor.ThemeEditor
 
                 var crit = new NumericUpDown
                 {
-                    Location = new Point(320, y),
-                    Width = 80,
+                    Location = new Point((int)(370 * dpiScale), y), // 调整位置以适应更宽的标签
+                    Width = (int)(80 * dpiScale),
                     DecimalPlaces = 0,
                     Maximum = 9999,
                     Value = (decimal)gc()
@@ -484,7 +518,7 @@ namespace LiteMonitor.ThemeEditor
                 crit.ValueChanged += (_, __) => { sc((double)crit.Value); preview.SetTheme(_theme!); };
                 pageThreshold.Controls.Add(crit);
 
-                y += 40;
+                y += (int)(40 * dpiScale);
             }
 
             var T = _theme.Thresholds;
@@ -493,16 +527,16 @@ namespace LiteMonitor.ThemeEditor
             pageThreshold.Controls.Add(new Label
             {
                 Text = "指标类型 / Metric Type",
-                Location = new Point(10, y + 6),
-                Width = 200,
-                Font = new Font("Microsoft YaHei UI", 10, FontStyle.Bold)
+                Location = new Point((int)(10 * dpiScale), y + (int)(6 * dpiScale)),
+                Width = (int)(250 * dpiScale), // 增加宽度以完整显示字段名称
+                Font = new Font("Microsoft YaHei UI", 10, FontStyle.Bold) // 字体自动 DPI 缩放
             });
 
             pageThreshold.Controls.Add(new Label
             {
                 Text = "警告 / Warn",
-                Location = new Point(215, y + 6),
-                Width = 90,
+                Location = new Point((int)(270 * dpiScale), y + 6), // 调整位置以适应更宽的标签
+                Width = (int)(90 * dpiScale),
                 Font = new Font("Microsoft YaHei UI", 10, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter
             });
@@ -510,13 +544,13 @@ namespace LiteMonitor.ThemeEditor
             pageThreshold.Controls.Add(new Label
             {
                 Text = "严重 / Crit",
-                Location = new Point(320, y + 6),
-                Width = 80,
+                Location = new Point((int)(370 * dpiScale), y + 6), // 调整位置以适应更宽的标签
+                Width = (int)(80 * dpiScale),
                 Font = new Font("Microsoft YaHei UI", 10, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter
             });
 
-            y += 30; // 增加垂直间距
+            y += (int)(50 * dpiScale); // 增加垂直间距，应用DPI缩放
 
             AddPair("负载阈值 / Load (%)", () => T.Load.Warn, () => T.Load.Crit,
                 v => T.Load.Warn = v, v => T.Load.Crit = v);
@@ -550,7 +584,7 @@ namespace LiteMonitor.ThemeEditor
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Location = new Point(10, 0) // 初始位置设为顶部，让Anchor属性自动处理到底部的定位
             };
-            
+
             // 为了确保按钮在面板加载完成后正确定位到底部，添加Layout事件处理
             page.Layout += (sender, e) => {
                 if (page.Controls.Contains(btn))
@@ -558,7 +592,7 @@ namespace LiteMonitor.ThemeEditor
                     btn.Top = page.ClientSize.Height - 60;
                 }
             };
-            
+
             btn.Click += (_, __) => SaveCurrentTheme();
             page.Controls.Add(btn);
         }
@@ -570,17 +604,17 @@ namespace LiteMonitor.ThemeEditor
             try
             {
                 ThemeFileService.SaveTheme(_currentThemeName, _theme);
-                
+
                 // 刷新主界面菜单的主题列表
                 RefreshMainFormThemeMenu();
-                
+
                 // 合并保存成功和是否应用主题的弹窗
-                var result = MessageBox.Show("主题已保存 / Saved Theme: " + _currentThemeName + 
-                    "\n\n是否立即应用此主题？\nApply this theme now?", 
-                    "保存成功 / Save Success", 
-                    MessageBoxButtons.YesNo, 
+                var result = MessageBox.Show("主题已保存 / Saved Theme: " + _currentThemeName +
+                    "\n\n是否立即应用此主题？\nApply this theme now?",
+                    "保存成功 / Save Success",
+                    MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
-                
+
                 if (result == DialogResult.Yes)
                 {
                     ApplyCurrentThemeToMainForm();
@@ -589,13 +623,13 @@ namespace LiteMonitor.ThemeEditor
             }
             catch (Exception ex)
             {
-                MessageBox.Show("保存失败 / Save Failed:\n" + ex.Message, 
-                    "错误 / Error", 
-                    MessageBoxButtons.OK, 
+                MessageBox.Show("保存失败 / Save Failed:\n" + ex.Message,
+                    "错误 / Error",
+                    MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
         }
-        
+
         /// <summary>
         /// 刷新主界面的主题菜单列表
         /// </summary>
@@ -609,7 +643,7 @@ namespace LiteMonitor.ThemeEditor
                 mainForm.RebuildMenus();
             }
         }
-        
+
         /// <summary>
         /// 应用当前主题到主窗体
         /// </summary>
@@ -620,25 +654,25 @@ namespace LiteMonitor.ThemeEditor
             if (mainForm != null)
             {
                 // 获取主窗体的UIController
-                var uiControllerField = typeof(MainForm).GetField("_ui", 
+                var uiControllerField = typeof(MainForm).GetField("_ui",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var settingsField = typeof(MainForm).GetField("_cfg", 
+                var settingsField = typeof(MainForm).GetField("_cfg",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
+
                 if (uiControllerField != null && settingsField != null)
                 {
                     var uiController = uiControllerField.GetValue(mainForm) as UIController;
                     var settings = settingsField.GetValue(mainForm) as Settings;
-                    
+
                     if (uiController != null && settings != null)
                     {
                         // 更新设置中的主题名称
                         settings.Skin = _currentThemeName;
                         settings.Save();
-                        
+
                         // 应用新主题
                         uiController.ApplyTheme(_currentThemeName);
-                        
+
                     }
                 }
             }
@@ -727,37 +761,41 @@ namespace LiteMonitor.ThemeEditor
         // ============================================================
         private string InputBox(string title, string defaultText = "")
         {
+            float dpiScale = GetDpiScale();
+            
             Form f = new Form
             {
                 Text = title,
-                Width = 400,
-                Height = 150,
+                Width = (int)(400 * dpiScale),
+                Height = (int)(150 * dpiScale),
                 StartPosition = FormStartPosition.CenterParent
             };
 
             TextBox tb = new TextBox
             {
-                Left = 20,
-                Top = 20,
-                Width = 340,
+                Left = (int)(20 * dpiScale),
+                Top = (int)(20 * dpiScale),
+                Width = (int)(340 * dpiScale),
                 Text = defaultText
             };
 
             Button ok = new Button
             {
                 Text = "确定 / OK",
-                Left = 80,
-                Top = 60,
-                Width = 100
+                Left = (int)(80 * dpiScale),
+                Top = (int)(60 * dpiScale),
+                Width = (int)(100 * dpiScale),
+                Height = (int)(30 * dpiScale) // 添加DPI缩放的高度
             };
             ok.Click += (_, __) => { f.DialogResult = DialogResult.OK; f.Close(); };
 
             Button cancel = new Button
             {
                 Text = "取消 / Cancel",
-                Left = 180,
-                Top = 60,
-                Width = 100
+                Left = (int)(180 * dpiScale),
+                Top = (int)(60 * dpiScale),
+                Width = (int)(100 * dpiScale),
+                Height = (int)(30 * dpiScale) // 添加DPI缩放的高度
             };
             cancel.Click += (_, __) => { f.DialogResult = DialogResult.Cancel; f.Close(); };
 

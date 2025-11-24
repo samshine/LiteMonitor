@@ -17,13 +17,20 @@ namespace LiteMonitor.ThemeEditor
         private Theme? _theme;
         private UILayout? _layout;
         private readonly List<GroupLayoutInfo> _groups = new();
+        private float _dpiScale = 1.0f;
 
         public ThemePreviewControl()
         {
             DoubleBuffered = true;
             BackColor = Color.White;
             BorderStyle = BorderStyle.FixedSingle;
-            Padding = new Padding(5);
+            
+            // DPI 缩放支持 - 手动计算内边距
+            using (Graphics g = CreateGraphics())
+            {
+                _dpiScale = g.DpiX / 96f;
+                Padding = new Padding((int)(5 * _dpiScale));
+            }
         }
 
         /// <summary>
@@ -32,10 +39,44 @@ namespace LiteMonitor.ThemeEditor
         public void SetTheme(Theme theme)
         {
             _theme = theme;
-            _layout = new UILayout(_theme);
+            
+            // 创建DPI缩放后的主题副本用于预览
+            var scaledTheme = CreateScaledTheme(theme);
+            _layout = new UILayout(scaledTheme);
 
             BuildMockData();
             Invalidate();
+        }
+
+        /// <summary>
+        /// 创建DPI缩放后的主题副本
+        /// </summary>
+        private Theme CreateScaledTheme(Theme original)
+        {
+            var scaled = new Theme
+            {
+                Name = original.Name,
+                FontTitle = original.FontTitle,
+                FontGroup = original.FontGroup,
+                FontItem = original.FontItem,
+                FontValue = original.FontValue,
+                Color = original.Color,
+                Layout = new LayoutConfig
+                {
+                    Width = (int)(original.Layout.Width * _dpiScale),
+                    Padding = (int)(original.Layout.Padding * _dpiScale),
+                    RowHeight = (int)(original.Layout.RowHeight * _dpiScale),
+                    ItemGap = (int)(original.Layout.ItemGap * _dpiScale),
+                    GroupPadding = (int)(original.Layout.GroupPadding * _dpiScale),
+                    GroupSpacing = (int)(original.Layout.GroupSpacing * _dpiScale),
+                    GroupBottom = (int)(original.Layout.GroupBottom * _dpiScale),
+                    GroupRadius = (int)(original.Layout.GroupRadius * _dpiScale),
+                    GroupTitleOffset = (int)(original.Layout.GroupTitleOffset * _dpiScale),
+                    CornerRadius = (int)(original.Layout.CornerRadius * _dpiScale)
+                }
+            };
+            
+            return scaled;
         }
 
         /// <summary>
@@ -102,8 +143,15 @@ namespace LiteMonitor.ThemeEditor
 
             try
             {
+                // 创建适应预览控件宽度的临时主题
+                var previewTheme = CreatePreviewTheme(_theme, content.Width);
+                
+                // 使用临时主题重新构建布局
+                var previewLayout = new UILayout(previewTheme);
+                previewLayout.Build(_groups);
+                
                 // 渲染所有组
-                UIRenderer.Render(e.Graphics, _groups, _theme);
+                UIRenderer.Render(e.Graphics, _groups, previewTheme);
             }
             catch (Exception ex)
             {
@@ -114,6 +162,37 @@ namespace LiteMonitor.ThemeEditor
                     new PointF(5, 5)
                 );
             }
+        }
+
+        /// <summary>
+        /// 创建适应预览控件宽度的主题副本
+        /// </summary>
+        private Theme CreatePreviewTheme(Theme original, int previewWidth)
+        {
+            var preview = new Theme
+            {
+                Name = original.Name,
+                FontTitle = original.FontTitle,
+                FontGroup = original.FontGroup,
+                FontItem = original.FontItem,
+                FontValue = original.FontValue,
+                Color = original.Color,
+                Layout = new LayoutConfig
+                {
+                    Width = (int)(240 * _dpiScale), // 固定为240像素（考虑DPI缩放）
+                    Padding = (int)(original.Layout.Padding * _dpiScale),
+                    RowHeight = (int)(original.Layout.RowHeight * _dpiScale),
+                    ItemGap = (int)(original.Layout.ItemGap * _dpiScale),
+                    GroupPadding = (int)(original.Layout.GroupPadding * _dpiScale),
+                    GroupSpacing = (int)(original.Layout.GroupSpacing * _dpiScale),
+                    GroupBottom = (int)(original.Layout.GroupBottom * _dpiScale),
+                    GroupRadius = (int)(original.Layout.GroupRadius * _dpiScale),
+                    GroupTitleOffset = (int)(original.Layout.GroupTitleOffset * _dpiScale),
+                    CornerRadius = (int)(original.Layout.CornerRadius * _dpiScale)
+                }
+            };
+            
+            return preview;
         }
 
         protected override void OnResize(EventArgs e)
