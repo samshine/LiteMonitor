@@ -49,11 +49,11 @@ namespace LiteMonitor
 
         // [新增] 记录历史最高值，用于自适应颜色判断
         // 给一些保守的默认值，防止初次运行分母为0
-        public float RecordedMaxCpuPower { get; set; } = 65.0f;  // 之前是 45W，建议改为 65W (主流台式机和游戏本的基准 TDP)
-        public float RecordedMaxCpuClock { get; set; } = 3800.0f; // 之前是 3000，建议改为 3800 (现代 CPU 睿频基本都能轻松过 3.8G)
-        public float RecordedMaxGpuPower { get; set; } = 80.0f; // 之前是 50W，建议改为 80W (甜品级显卡的起步功耗)
-        public float RecordedMaxGpuClock { get; set; } = 1500.0f; // 之前是 1000，建议改为 1500 (绝大多数独显都能达到)
-        
+        public float RecordedMaxCpuPower { get; set; } = 65.0f;   // 改为 65W (覆盖轻薄本)
+        public float RecordedMaxCpuClock { get; set; } = 2500.0f; // 改为 2500MHz (覆盖低频U)
+        public float RecordedMaxGpuPower { get; set; } = 80.0f;   // 改为 80W (覆盖入门/中级卡)
+        public float RecordedMaxGpuClock { get; set; } = 2300.0f;  // 改为 2300MHz (覆盖入门独显)
+        public bool MaxLimitTipShown { get; set; } = false;  // 最大值弹窗提示已显示
 
         // [新增] 高温报警配置
         public bool AlertTempEnabled { get; set; } = true; // 总开关

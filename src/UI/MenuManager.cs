@@ -208,18 +208,59 @@ namespace LiteMonitor
                 grpShow.DropDownItems.Add(item);
             }
 
+            // === 1. [修改] 引导提示函数 (基于 Setting 记录) ===
+            void CheckAndRemind(string name)
+            {
+                // 如果已经提示过，直接跳过 (永久防打扰)
+                if (cfg.MaxLimitTipShown) return;
+
+                string msg = cfg.Language == "zh"
+                    // ★★★ 中文：您提供的文案 ★★★
+                    ? $"您是首次开启 {name}。\n\n建议设置一下电脑实际“最大{name}”，让进度条显示更准确。\n\n是否现在去设置？\n\n点“否”将不再提示，程序将在高负载时（如大型游戏时）进行动态学习最大值"
+                    // ★★★ 英文：对应翻译 ★★★
+                    : $"You are enabling {name} for the first time.\n\nIt is recommended to set the actual 'Max {name}' for accurate progress bars.\n\nGo to settings now?\n\n(Select 'No' to suppress this prompt. The app will auto-learn the max value under high load.)";
+
+                // ★★★ 核心：无论用户选什么，都标记为“已阅”，以后不再弹窗 ★★★
+                cfg.MaxLimitTipShown = true;
+                cfg.Save();
+
+                // 弹窗询问
+                if (MessageBox.Show(msg, "LiteMonitor Setup", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    // 用户选“是” -> 打开设置窗口
+                    var f = new ThresholdForm(cfg);
+                    if (f.ShowDialog() == DialogResult.OK)
+                    {
+                        ui?.RebuildLayout(); 
+                        form.RebuildMenus(); 
+                    }
+                }
+            }
+
             AddToggle("Items.CPU.Load", () => cfg.Enabled.CpuLoad, v => cfg.Enabled.CpuLoad = v);
             AddToggle("Items.CPU.Temp", () => cfg.Enabled.CpuTemp, v => cfg.Enabled.CpuTemp = v);
-            // ★★★ 新增 CPU 频率/功耗 ★★★
-            AddToggle("Items.CPU.Clock", () => cfg.Enabled.CpuClock, v => cfg.Enabled.CpuClock = v);
-            AddToggle("Items.CPU.Power", () => cfg.Enabled.CpuPower, v => cfg.Enabled.CpuPower = v);
+            // CPU
+            AddToggle("Items.CPU.Clock", () => cfg.Enabled.CpuClock, v => {
+                cfg.Enabled.CpuClock = v;
+                // ★★★ 修改：使用多语言键值替代硬编码 ★★★
+                if (v) CheckAndRemind(LanguageManager.T("Items.CPU.Clock"));
+            });
+            AddToggle("Items.CPU.Power", () => cfg.Enabled.CpuPower, v => {
+                cfg.Enabled.CpuPower = v;
+                if (v) CheckAndRemind(LanguageManager.T("Items.CPU.Power"));
+            });
             grpShow.DropDownItems.Add(new ToolStripSeparator());
             AddToggle("Items.GPU.Load", () => cfg.Enabled.GpuLoad, v => cfg.Enabled.GpuLoad = v);
             AddToggle("Items.GPU.Temp", () => cfg.Enabled.GpuTemp, v => cfg.Enabled.GpuTemp = v);
             AddToggle("Items.GPU.VRAM", () => cfg.Enabled.GpuVram, v => cfg.Enabled.GpuVram = v);
-            // ★★★ 新增 GPU 频率/功耗 ★★★
-            AddToggle("Items.GPU.Clock", () => cfg.Enabled.GpuClock, v => cfg.Enabled.GpuClock = v);
-            AddToggle("Items.GPU.Power", () => cfg.Enabled.GpuPower, v => cfg.Enabled.GpuPower = v);
+            AddToggle("Items.GPU.Clock", () => cfg.Enabled.GpuClock, v => {
+                cfg.Enabled.GpuClock = v;
+                if (v) CheckAndRemind(LanguageManager.T("Items.GPU.Clock"));
+            });
+            AddToggle("Items.GPU.Power", () => cfg.Enabled.GpuPower, v => {
+                cfg.Enabled.GpuPower = v;
+                if (v) CheckAndRemind(LanguageManager.T("Items.GPU.Power"));
+            });
             grpShow.DropDownItems.Add(new ToolStripSeparator());
             AddToggle("Items.MEM.Load", () => cfg.Enabled.MemLoad, v => cfg.Enabled.MemLoad = v);
             grpShow.DropDownItems.Add(new ToolStripSeparator());

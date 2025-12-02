@@ -89,15 +89,37 @@ namespace LiteMonitor.src.System
                 float maxRawClock = 0;
                 float validCoreCount = 0; // 新增：记录读到频率的核心数
                 double sumRawClock = 0;   // 新增：记录频率总和（用于算简单平均）
-
+                // ★★★ [Zen 5 科学修正准备] ★★★
+                float correctionFactor = 1.0f;
+                // 检查总线频率是否异常 (正常是 100MHz，如果小于 20MHz 肯定是 LHM 驱动 Bug)
+                if (_cpuBusSpeedSensor != null && _cpuBusSpeedSensor.Value.HasValue)
+                {
+                    float bus = _cpuBusSpeedSensor.Value.Value;
+                    
+                    // 捕捉 15.3MHz 这种异常值 (排除 0 和极小干扰)
+                    if (bus > 1.0f && bus < 20.0f) 
+                    {
+                        // 动态计算修正系数：把当前读数还原回 100MHz 标准
+                        float factor = 100.0f / bus;
+                        
+                        // [安全钳制] 正常修正大概在 6.5 倍左右 (100/15.3 ≈ 6.53)
+                        // 如果算出来系数过大 (如 >10)，可能是传感器读数错误，不予修正，防止显示爆炸
+                        if (factor > 2.0f && factor < 10.0f) 
+                        {
+                            correctionFactor = factor;
+                        }
+                    }
+                }
                 // 遍历缓存，零 GC，极速
                 foreach (var core in _cpuCoreCache)
                 {
                     if (core.Clock == null || !core.Clock.Value.HasValue) continue;
 
-                    float clk = core.Clock.Value.Value;
-                    if (clk > maxRawClock) maxRawClock = clk;
+                    // ★★★ [应用修正] ★★★
+                    // 如果触发了 Bug，这里会自动乘以系数还原；否则系数为 1.0 (无影响)
+                    float clk = core.Clock.Value.Value * correctionFactor;
 
+                    if (clk > maxRawClock) maxRawClock = clk;
                     // 累加基础数据
                     sumRawClock += clk;
                     validCoreCount++;

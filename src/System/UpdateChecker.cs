@@ -66,8 +66,19 @@ namespace LiteMonitor
                 if (info == null)
                 {
                     if (showMessage)
-                        MessageBox.Show("无法连接到更新服务器，请稍后重试。",
-                            "检查更新", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    {
+                        // 根据当前语言设置显示中文或英文版本
+                        if (LanguageManager.CurrentLang == "zh")
+                        {
+                            MessageBox.Show("无法连接到更新服务器，请稍后重试。",
+                                "检查更新", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Unable to connect to update server, please try again later.",
+                                "Update Check", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
                     return;
                 }
 
@@ -88,17 +99,38 @@ namespace LiteMonitor
                 else
                 {
                     if (showMessage)
-                         // ★★★ 修改了这里 ★★★
-                        MessageBox.Show($"当前已是最新版本 ：v{current}\n发布日期：{releaseDate}", "检查更新", 
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    {
+                        // 根据当前语言设置显示中文或英文版本
+                        if (LanguageManager.CurrentLang == "zh")
+                        {
+                            MessageBox.Show($"当前已是最新版本 ：v{current}\n发布日期：{releaseDate}", "检查更新", 
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Already the latest version: v{current}\nRelease date: {releaseDate}", "Update Check", 
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("[UpdateChecker] Error: " + ex.Message);
                 if (showMessage)
-                    MessageBox.Show("检查更新失败，可能是网络问题。", 
-                        "检查更新失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                {
+                    // 根据当前语言设置显示中文或英文版本
+                    if (LanguageManager.CurrentLang == "zh")
+                    {
+                        MessageBox.Show("检查更新失败，可能是网络问题。", 
+                            "检查更新失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Update check failed, possibly due to network issues.", 
+                            "Update Check Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
             }
         }
 

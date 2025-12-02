@@ -59,6 +59,8 @@ namespace LiteMonitor.src.System
         
         // 显卡硬件缓存 (用于快速定位)
         private IHardware? _cachedGpu;
+        // ★★★ [新增] 缓存总线传感器 (用于 Zen 5 频率修正) ★★★
+        private ISensor? _cpuBusSpeedSensor;
 
         // 网络/磁盘 智能缓存
         private IHardware? _cachedNetHw;
@@ -406,6 +408,7 @@ namespace LiteMonitor.src.System
             var newMap = new Dictionary<string, ISensor>();
             var newCpuCache = new List<CpuCoreSensors>();
             IHardware? newGpu = null;
+            ISensor? newBusSensor = null; // 临时变量
 
             // 局部递归函数
             void RegisterTo(IHardware hw)
@@ -415,10 +418,18 @@ namespace LiteMonitor.src.System
                 // --- 填充 CPU 缓存 (用于加权平均) ---
                 if (hw.HardwareType == HardwareType.Cpu)
                 {
+                    // ★★★ [新增] 查找并缓存 Bus Speed 传感器 ★★★
+                    // 优先查找名为 "Bus Speed" 的时钟传感器
+                    if (newBusSensor == null)
+                    {
+                        newBusSensor = hw.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Clock && s.Name.Contains("Bus Speed"));
+                    }
+
                     // 查找所有核心频率 (排除总线频率)
                     var clocks = hw.Sensors.Where(s => s.SensorType == SensorType.Clock && Has(s.Name, "core") && !Has(s.Name, "bus"));
                     
-                   foreach (var clock in clocks)
+                    
+                    foreach (var clock in clocks)
                     {
                         // ★★★ 修复：AMD 负载叫 "CPU Core #1"，频率叫 "Core #1"，不相等。
                         // 改用 EndsWith 匹配，既支持 Intel (名字一样) 也支持 AMD (带前缀)
@@ -484,7 +495,7 @@ namespace LiteMonitor.src.System
                 
                 _cpuCoreCache = newCpuCache;
                 _cachedGpu = newGpu;
-                
+                _cpuBusSpeedSensor = newBusSensor; // ★ 更新 Bus Sensor 缓存
                 _lastMapBuild = DateTime.Now;
             }
         }

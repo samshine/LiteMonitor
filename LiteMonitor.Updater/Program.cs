@@ -149,39 +149,15 @@ namespace LiteMonitor.Updater
             // 原有启动逻辑
             string exePath = Path.Combine(baseDir, ExeName);
 
-            if (TaskExists())
-            {
-                try { Process.Start("schtasks.exe", $"/Run /TN \"{TaskName}\""); } catch { }
-            }
-            else
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = exePath,
-                        UseShellExecute = true
-                    });
-                }
-                catch { }
-            }
-        }
-
-
-        private static bool TaskExists()
-        {
             try
             {
-                var p = Process.Start(new ProcessStartInfo("schtasks", $"/Query /TN \"{TaskName}\"")
+                Process.Start(new ProcessStartInfo
                 {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
+                    FileName = exePath,
+                    UseShellExecute = true
                 });
-                p.WaitForExit();
-                return p.ExitCode == 0;
             }
-            catch { return false; }
+            catch { }
         }
 
         private static void WaitExit(string name)

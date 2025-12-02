@@ -38,9 +38,12 @@ namespace LiteMonitor.src.System
             string exePath = Process.GetCurrentProcess().MainModule!.FileName!;
             // 双层引号：避免 schtasks 吃掉引号（外层）+ 避免路径被空格截断（内层）
             string quotedPath = $"\"\\\"{exePath}\\\"\"";
-
-            // 先删除旧任务，避免报错
-            RunSchtasks($"/Delete /TN \"{TaskName}\" /F", out _);
+            // 只有任务存在时才执行删除，避免报错
+            if (Exists())
+            {
+                // 先删除旧任务，避免报错
+                RunSchtasks($"/Delete /TN \"{TaskName}\" /F", out _);
+            }
 
             // 当前用户名（例如：TUEUR 或 DOMAIN\TUEUR）
             string user = Environment.UserName;
@@ -72,7 +75,12 @@ namespace LiteMonitor.src.System
         /// </summary>
         private static void DeleteTask()
         {
-            RunSchtasks($"/Delete /TN \"{TaskName}\" /F", out _);
+            // 只有任务存在时才执行删除，避免报错
+            if (Exists())
+            {
+                // 先删除旧任务，避免报错
+                RunSchtasks($"/Delete /TN \"{TaskName}\" /F", out _);
+            }
         }
 
         /// <summary>

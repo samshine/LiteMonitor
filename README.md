@@ -7,8 +7,12 @@ A lightweight and customizable desktop hardware monitoring tool — real-time mo
 
 > 🟢 **立即下载最新版本：** [📦 GitHub Releases → LiteMonitor 最新版](https://github.com/Diorser/LiteMonitor/releases/latest)    /  [⏬国内镜像网站下载](https://litemonitor.cn/)    
 
+*注意：由于涉及底层硬件读取，杀毒软件可能会误报 WinRing0 驱动，请添加信任或允许运行。*  
+*如不放心，代码是开源的，可自行查验。*
+
 LiteMonitor 是一款基于 **Windows** 的现代化桌面系统监控工具。  
 支持横/竖屏/任务栏显示、主题切换、多语言、透明度显示、三色报警等，界面简洁且高度可配置 。
+
 
 
 ![LiteMonitor 主界面](./resources/screenshots/overview.png)

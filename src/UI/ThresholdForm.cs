@@ -57,9 +57,9 @@ namespace LiteMonitor
             F_Value = new Font("Consolas", 10.5F, FontStyle.Bold);
 
             // 窗体属性
-            this.Text = "报警阈值设置 (Threshold Settings)";
-            this.Size = new Size(S(584), S(780));
-            this.MinimumSize = new Size(S(550), S(600));
+            this.Text = "告警阈值设置 (Threshold Settings)";
+            this.Size = new Size(S(584), S(960));
+            this.MinimumSize = new Size(S(584), S(960));
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -87,16 +87,39 @@ namespace LiteMonitor
             };
 
             // 2. 添加功能卡片 (Cards)
+             // ★★★ [新增] 卡片: 频率与功耗最大值 ★★★
+            // 为了数据准确性，单位使用 MHz (对应 Settings 中的存储单位)，如果用 GHz 需要小数位支持
+            mainScroll.Controls.Add(CreateCard("最大频率与功耗 (Max Limits)", p => {
+                AddHardwareHeaderRow(p); // 添加 CPU/GPU 表头
+                
+              
+                
+                // 最大频率行
+                AddMaxLimitRow(p, "最大频率 / Max Clock (MHz)", 
+                    _cfg.RecordedMaxCpuClock, _cfg.RecordedMaxGpuClock,
+                    v => _cfg.RecordedMaxCpuClock = v,
+                    v => _cfg.RecordedMaxGpuClock = v);
+
+                // 最大功耗行
+                AddMaxLimitRow(p, "最大功耗 / Max Power (W)", 
+                    _cfg.RecordedMaxCpuPower, _cfg.RecordedMaxGpuPower,
+                    v => _cfg.RecordedMaxCpuPower = v,
+                    v => _cfg.RecordedMaxGpuPower = v);
+            
+              // ★★★ 新增：添加多行说明文本 ★★★
+                AddDescriptionRow(p, "⚠️ 请填写硬件的实际最大值，若不填写，将在高负载时动态学习并更新。");
+            }));
+
             
             // 卡片 A: 通用硬件 (CPU/Temp)
-            mainScroll.Controls.Add(CreateCard("通用硬件 (General Hardware)", p => {
+            mainScroll.Controls.Add(CreateCard("⚠️通用硬件 (General Hardware)", p => {
                 AddHeaderRow(p); // 表头
                 AddConfigRow(p, "负载 / Load (%)", _cfg.Thresholds.Load);
                 AddConfigRow(p, "温度 / Temp (°C)", _cfg.Thresholds.Temp);
             }));
 
             // 卡片 B: 磁盘与网络 (Speed)
-            mainScroll.Controls.Add(CreateCard("传输速率 (Transfer Speed)", p => {
+            mainScroll.Controls.Add(CreateCard("⚠️传输速率 (Transfer Speed)", p => {
                 AddHeaderRow(p);
                 AddConfigRow(p, "磁盘读写 / Disk IO (MB/s)", _cfg.Thresholds.DiskIOMB);
                 AddConfigRow(p, "上传速率 / Net Up (MB/s)", _cfg.Thresholds.NetUpMB);
@@ -104,14 +127,15 @@ namespace LiteMonitor
             }));
 
             // 卡片 C: 流量统计 (Data)
-            mainScroll.Controls.Add(CreateCard("每日流量 (Daily Data Usage)", p => {
+            mainScroll.Controls.Add(CreateCard("⚠️每日流量 (Daily Data Usage)", p => {
                 AddHeaderRow(p);
                 AddConfigRow(p, "上传总量 / Upload (MB)", _cfg.Thresholds.DataUpMB);
                 AddConfigRow(p, "下载总量 / Download (MB)", _cfg.Thresholds.DataDownMB);
             }));
 
+           
             // 卡片 D: 弹窗通知 (Notification)
-            mainScroll.Controls.Add(CreateCard("弹窗通知 (Popup Alert)", p => {
+            mainScroll.Controls.Add(CreateCard("⚠️弹窗通知 (Popup Alert)", p => {
                 // 单行特殊布局
                 AddSingleRow(p, "高温报警触发线 / High Temp Limit (°C)", _cfg.AlertTempThreshold, v => _cfg.AlertTempThreshold = v);
             }));
@@ -132,10 +156,16 @@ namespace LiteMonitor
             btnSave.Location = new Point(this.ClientSize.Width - S(240), S(15));
             // ★★★ 修改这里：点击保存时，把替身的数据覆盖回真身 ★★★
             btnSave.Click += (s, e) => { 
-                // 只覆盖我们在窗口里修改的部分
+                // 1. 覆盖阈值设置
                 _sourceCfg.Thresholds = _cfg.Thresholds;
                 _sourceCfg.AlertTempThreshold = _cfg.AlertTempThreshold;
                 
+                // 2. ★★★ 新增：覆盖最大值记录 ★★★
+                _sourceCfg.RecordedMaxCpuClock = _cfg.RecordedMaxCpuClock;
+                _sourceCfg.RecordedMaxGpuClock = _cfg.RecordedMaxGpuClock;
+                _sourceCfg.RecordedMaxCpuPower = _cfg.RecordedMaxCpuPower;
+                _sourceCfg.RecordedMaxGpuPower = _cfg.RecordedMaxGpuPower;
+
                 _sourceCfg.Save(); // 保存真身
                 
                 this.DialogResult = DialogResult.OK; 
@@ -224,13 +254,51 @@ namespace LiteMonitor
             t.Controls.Add(new Label(), 0, t.RowCount - 1);
 
             // Warn 表头
-            var lblWarn = new Label { Text = "警告 (Warn)", ForeColor = C_Warn, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
+            var lblWarn = new Label { Text = "注意 (Warn)", ForeColor = C_Warn, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
             t.Controls.Add(lblWarn, 1, t.RowCount - 1);
 
             // Crit 表头
-            var lblCrit = new Label { Text = "严重 (Crit)", ForeColor = C_Crit, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
+            var lblCrit = new Label { Text = "重视 (Crit)", ForeColor = C_Crit, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
             t.Controls.Add(lblCrit, 2, t.RowCount - 1);
         }
+
+        // ★★★ [新增] 辅助方法：添加硬件表头 (CPU / GPU) ★★★
+        private void AddHardwareHeaderRow(TableLayoutPanel t)
+        {
+            t.RowCount++;
+            t.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            
+            // 空第一列
+            t.Controls.Add(new Label(), 0, t.RowCount - 1);
+
+            // CPU 表头
+            var lblCpu = new Label { Text = "CPU (Max)", ForeColor = C_Action, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
+            t.Controls.Add(lblCpu, 1, t.RowCount - 1);
+
+            // GPU 表头
+            var lblGpu = new Label { Text = "GPU (Max)", ForeColor = C_Action, Font = new Font(F_Label, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Left };
+            t.Controls.Add(lblGpu, 2, t.RowCount - 1);
+        }
+
+        // ★★★ [新增] 辅助方法：添加说明文本行 (跨列显示) ★★★
+        private void AddDescriptionRow(TableLayoutPanel t, string text)
+        {
+            t.RowCount++;
+            t.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            int row = t.RowCount - 1;
+
+            var lbl = new Label
+            {
+                Text = text,
+                ForeColor = C_TextSub, // 使用次要文字颜色 (灰色)，避免喧宾夺主
+                Font = new Font(F_Label.FontFamily, 9F, FontStyle.Bold), // 字体稍小一点
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, S(10)) // 底部增加 15px 间距，与下方表头隔开
+            };
+            t.Controls.Add(lbl, 0, row);
+            t.SetColumnSpan(lbl, 3); // 关键：设置该控件跨越 3 列
+        }
+
 
         // 添加配置行
         private void AddConfigRow(TableLayoutPanel t, string name, ValueRange range)
@@ -260,6 +328,36 @@ namespace LiteMonitor
             var numCrit = CreateModernNum(range.Crit, C_Crit);
             numCrit.ValueChanged += (s, e) => range.Crit = (double)numCrit.Value;
             t.Controls.Add(numCrit, 2, row);
+        }
+
+        // ★★★ [新增] 辅助方法：添加最大值配置行 ★★★
+        private void AddMaxLimitRow(TableLayoutPanel t, string name, float cpuVal, float gpuVal, Action<float> setCpu, Action<float> setGpu)
+        {
+            t.RowCount++;
+            t.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            int row = t.RowCount - 1;
+
+            // 1. 标签
+            var lbl = new Label
+            {
+                Text = name,
+                ForeColor = C_TextMain,
+                Font = F_Label,
+                AutoSize = true,
+                Anchor = AnchorStyles.Left | AnchorStyles.Top,
+                Margin = new Padding(0, S(10), 0, S(10)) 
+            };
+            t.Controls.Add(lbl, 0, row);
+
+            // 2. CPU 输入框 (使用 C_Action 蓝色以示区分)
+            var numCpu = CreateModernNum(cpuVal, C_Action);
+            numCpu.ValueChanged += (s, e) => setCpu((float)numCpu.Value);
+            t.Controls.Add(numCpu, 1, row);
+
+            // 3. GPU 输入框
+            var numGpu = CreateModernNum(gpuVal, C_Action);
+            numGpu.ValueChanged += (s, e) => setGpu((float)numGpu.Value);
+            t.Controls.Add(numGpu, 2, row);
         }
 
         // 添加单行配置 (用于弹窗阈值)
