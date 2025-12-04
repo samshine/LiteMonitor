@@ -20,9 +20,9 @@ namespace LiteMonitor
         private readonly Color C_InputBack  = Color.FromArgb(55, 55, 55);    
         private readonly Color C_Separator  = Color.FromArgb(60, 60, 60);    
         
-        private readonly Color C_TextMain   = Color.FromArgb(240, 240, 240); 
+        private readonly Color C_TextMain   = Color.FromArgb(220, 220, 220); 
         private readonly Color C_TextSub    = Color.FromArgb(160, 160, 160); 
-        private readonly Color C_TextTitle  = Color.FromArgb(255, 255, 255); 
+        private readonly Color C_TextTitle  = Color.FromArgb(220, 220, 220); 
         
         private readonly Color C_Warn       = Color.FromArgb(255, 180, 0);   
         private readonly Color C_Crit       = Color.FromArgb(255, 80, 80);   
