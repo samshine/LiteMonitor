@@ -333,6 +333,17 @@ namespace LiteMonitor.src.UI.SettingsPage
             
             // 更新配置列表
             Config.MonitorItems = flatList;
+            // =========================================================
+            // ★★★ 新增：应用生效逻辑 ★★★
+            // =========================================================
+            
+            // 1. 因为本页面修改了 UserLabel 和 GroupAliases，必须同步给翻译器
+            //    否则 Group 标题（渲染时走 LanguageManager）不会变成自定义的别名
+            Config.SyncToLanguage();
+
+            // 2. 通知 UI 重新构建布局 (因为可能有项目显示/隐藏，或者名称变了)
+            //    注意：使用基类的 UI 和 MainForm 引用
+            AppActions.ApplyMonitorLayout(UI, MainForm);
         }
         private class GroupUI { public string Key; public TextBox Input; }
         private class RowUI { public MonitorItemConfig Config; public Control RowControl; public TextBox InputName; public TextBox InputShort; public CheckBox ChkPanel; public CheckBox ChkTaskbar; }

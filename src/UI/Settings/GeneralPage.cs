@@ -27,6 +27,7 @@ namespace LiteMonitor.src.UI.SettingsPage
 
         private LiteComboBox _cmbNet;
         private LiteComboBox _cmbDisk;
+        private string _originalLanguage;
 
         public GeneralPage()
         {
@@ -36,7 +37,7 @@ namespace LiteMonitor.src.UI.SettingsPage
             _container = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Padding = new Padding(20) };
             this.Controls.Add(_container);
         }
-
+    
         public override void OnShow()
         {
             if (Config == null || _isLoaded) return;
@@ -49,6 +50,8 @@ namespace LiteMonitor.src.UI.SettingsPage
             CreateSystemCard();   
             CreateSourceCard();   
 
+            // ★ 记录原始语言
+            _originalLanguage = Config.Language;
             _container.ResumeLayout();
             _isLoaded = true;
         }
@@ -81,7 +84,7 @@ namespace LiteMonitor.src.UI.SettingsPage
 
             // 4. Refresh Rate
             _cmbRefresh = new LiteComboBox();
-            int[] rates = { 100, 200, 500, 1000, 2000, 3000 };
+            int[] rates = { 100, 200, 300, 500, 600, 700, 800, 1000, 1500, 2000, 3000 };
             foreach (var r in rates) _cmbRefresh.Items.Add(r + " ms");
             SetComboVal(_cmbRefresh, Config.RefreshMs + " ms");
             group.AddItem(new LiteSettingsItem(LanguageManager.T("Menu.Refresh"), _cmbRefresh));
@@ -165,27 +168,31 @@ namespace LiteMonitor.src.UI.SettingsPage
         {
             if (!_isLoaded) return;
 
+            // 1. === 收集数据到 Config ===
+            
+            // 基础
             Config.AutoStart = _chkAutoStart.Checked;
             Config.TopMost = _chkTopMost.Checked;
-            Config.RefreshMs = ParseInt(_cmbRefresh.Text);
-            if (Config.RefreshMs < 50) Config.RefreshMs = 1000;
-
+            
+            // 语言 (修复后的逻辑)
             if (_cmbLang.SelectedItem != null)
             {
                 string s = _cmbLang.SelectedItem.ToString();
-                if (s.Contains("(") && s.Contains(")")) {
-                    int start = s.LastIndexOf("(") + 1;
-                    int len = s.LastIndexOf(")") - start;
-                    if (len > 0) Config.Language = s.Substring(start, len).ToLower();
-                } else if (s == "Auto") Config.Language = "";
+                Config.Language = (s == "Auto") ? "" : s.Split('(')[0].Trim().ToLower(); // 简单处理
             }
 
+            // 行为
             Config.AutoHide = _chkAutoHide.Checked;
             Config.ClickThrough = _chkClickThrough.Checked;
-            Config.ClampToScreen = _chkClamp.Checked;
+            Config.ClampToScreen = _chkClamp.Checked; // 这个不需要 Action，移动窗口时实时读配置
             Config.HideTrayIcon = _chkHideTray.Checked;
             Config.HideMainForm = _chkHideMain.Checked;
+            
+            // 刷新率 (这个通常算外观，但如果放在常规页，也要处理)
+            Config.RefreshMs = ParseInt(_cmbRefresh.Text);
+            if (Config.RefreshMs < 50) Config.RefreshMs = 1000;
 
+            // 数据源
             if (_cmbDisk.SelectedItem != null) {
                 string d = _cmbDisk.SelectedItem.ToString();
                 Config.PreferredDisk = (d == "Auto") ? "" : d;
@@ -194,7 +201,31 @@ namespace LiteMonitor.src.UI.SettingsPage
                 string n = _cmbNet.SelectedItem.ToString();
                 Config.PreferredNetwork = (n == "Auto") ? "" : n;
             }
-            AutoStart.Set(Config.AutoStart);
+
+            // === 调用 AppActions ===
+            // ★ 注意：这里使用 this.MainForm 而不是 _mainForm
+            // ★ 注意：这里使用 this.UI 而不是 _ui
+            
+            // 应用自启
+            AppActions.ApplyAutoStart(Config);
+
+            // 应用窗口属性
+            AppActions.ApplyWindowAttributes(Config, this.MainForm); 
+
+            // 应用可见性
+            AppActions.ApplyVisibility(Config, this.MainForm);
+
+            // 应用数据源
+            AppActions.ApplyMonitorLayout(this.UI, this.MainForm);
+
+            // 应用语言 - 只有当语言真正改变时，才执行 ApplyLanguage (重载资源)
+            if (_originalLanguage != Config.Language)
+            {
+                AppActions.ApplyLanguage(Config, this.UI, this.MainForm);
+                
+                // 更新记录，防止连续点击 Apply 时重复触发
+                _originalLanguage = Config.Language; 
+            }
         }
 
         private int ParseInt(string s)

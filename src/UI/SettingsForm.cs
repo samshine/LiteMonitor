@@ -104,7 +104,7 @@ namespace LiteMonitor.src.UI
 
         private void AddNav(string key, string text, SettingsPageBase page)
         {
-            page.SetConfig(_cfg);
+            page.SetContext(_cfg, _mainForm, _ui);
             _pages[key] = page;
             var btn = new LiteNavBtn(text) { Tag = key };
             btn.Click += (s, e) => SwitchPage(key);
@@ -134,15 +134,18 @@ namespace LiteMonitor.src.UI
             }
         }
 
+        // ★★★ 极致瘦身后的 ApplySettings ★★★
         private void ApplySettings()
         {
-            foreach (var page in _pages.Values) page.Save();
+            // 1. 让每个页面自己保存并执行 AppActions
+            //    (MonitorPage 会刷新布局，GeneralPage 会刷新语言等)
+            foreach (var page in _pages.Values) 
+            {
+                page.Save();
+            }
+            
+            // 2. 将最终的 Config 写入磁盘
             _cfg.Save();
-            _cfg.SyncToLanguage();
-            _ui.ApplyTheme(_cfg.Skin);
-            _ui.RebuildLayout();
-            _mainForm.RebuildMenus();
-            foreach (Form f in Application.OpenForms) if (f is TaskbarForm tf) tf.ReloadLayout();
         }
     }
 }

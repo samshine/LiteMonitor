@@ -256,6 +256,10 @@ namespace LiteMonitor
                 _cfg.Language = File.Exists(langPath) ? sysLang : "en";
             }
 
+            // ★★★【新增】补救措施 1：启动时必须手动加载一次语言 ★★★
+            // 既然 UIController.ApplyTheme 不再负责加载语言，这里必须显式调用！
+            LanguageManager.Load(_cfg.Language);
+
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             TopMost = _cfg.TopMost;

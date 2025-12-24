@@ -59,7 +59,7 @@ namespace LiteMonitor.src.UI.SettingsPage
             group.AddItem(new LiteSettingsItem(LanguageManager.T("Menu.DisplayMode"), _cmbOrientation));
 
             _cmbWidth = new LiteComboBox();
-            int[] widths = { 180, 200, 220, 240, 260, 280, 300, 360, 420, 480, 600, 800 };
+            int[] widths =  { 180, 200, 220, 240, 260, 280, 300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200 };
             foreach (var w in widths) _cmbWidth.Items.Add(w + " px");
             SetComboVal(_cmbWidth, Config.PanelWidth + " px");
             group.AddItem(new LiteSettingsItem(LanguageManager.T("Menu.Width"), _cmbWidth));
@@ -71,7 +71,8 @@ namespace LiteMonitor.src.UI.SettingsPage
             group.AddItem(new LiteSettingsItem(LanguageManager.T("Menu.Scale"), _cmbScale));
 
             _cmbOpacity = new LiteComboBox();
-            for (int i = 100; i >= 30; i -= 10) _cmbOpacity.Items.Add(i + "%");
+            double[] presetOps = { 1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.6, 0.5, 0.4, 0.3 };
+            foreach (var op in presetOps) _cmbOpacity.Items.Add((op * 100) + "%");
             SetComboVal(_cmbOpacity, Math.Round(Config.Opacity * 100) + "%");
             group.AddItem(new LiteSettingsItem(LanguageManager.T("Menu.Opacity"), _cmbOpacity));
 
@@ -120,12 +121,18 @@ namespace LiteMonitor.src.UI.SettingsPage
         {
             if (!_isLoaded) return;
 
+            // === 1. 收集数据 (保持原样) ===
+
+            // 主题、方向、宽度、缩放
             if (_cmbTheme.SelectedItem != null) Config.Skin = _cmbTheme.SelectedItem.ToString();
             Config.HorizontalMode = (_cmbOrientation.SelectedIndex == 1);
             Config.PanelWidth = ParseInt(_cmbWidth.Text);
             Config.UIScale = ParsePercent(_cmbScale.Text);
+            
+            // 透明度
             Config.Opacity = ParsePercent(_cmbOpacity.Text);
 
+            // 任务栏设置
             if (_chkTaskbarCompact.Checked) {
                 Config.TaskbarFontSize = 9f;
                 Config.TaskbarFontBold = false;
@@ -134,6 +141,17 @@ namespace LiteMonitor.src.UI.SettingsPage
                 Config.TaskbarFontBold = true;
             }
             Config.TaskbarAlignLeft = _chkTaskbarAlignLeft.Checked;
+
+            // === 2. 执行动作 (调用 AppActions) ===
+            
+            // A. 应用主题、布局、缩放、显示模式 (对应 Theme, Orientation, Width, Scale)
+            AppActions.ApplyThemeAndLayout(Config, UI, MainForm);
+
+            // B. 应用窗口属性 (对应 Opacity)
+            AppActions.ApplyWindowAttributes(Config, MainForm);
+
+            // C. 应用任务栏样式 (对应 TaskbarCompact, TaskbarAlignLeft)
+            AppActions.ApplyTaskbarStyle(Config, UI);
         }
 
         private int ParseInt(string s) {

@@ -53,7 +53,7 @@ namespace LiteMonitor
 
         public void ApplyTheme(string name)
         {
-            LanguageManager.Load(_cfg.Language);
+            // LanguageManager.Load(_cfg.Language);
             ThemeManager.Load(name);
             UIRenderer.ClearCache();
             var t = ThemeManager.Current;

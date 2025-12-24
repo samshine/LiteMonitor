@@ -300,6 +300,14 @@ namespace LiteMonitor.src.UI.SettingsPage
             // 5. Alert
             Config.AlertTempThreshold = I(_inAlertTemp);
             Config.AlertTempEnabled = _chkAlertTemp.Checked;
+            // =========================================================
+            // ★★★ 新增：应用生效逻辑 ★★★
+            // =========================================================
+
+            // 修改了最大值 (Max Limits) 会影响进度条的比例计算
+            // 修改了阈值 (Thresholds) 会影响颜色判定 (Warn/Crit)
+            // 所以需要刷新一下界面
+            AppActions.ApplyMonitorLayout(UI, MainForm);
         }
     }
 }
