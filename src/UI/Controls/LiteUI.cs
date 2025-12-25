@@ -21,6 +21,11 @@ namespace LiteMonitor.src.UI.Controls
         public static Color TextWarn = Color.FromArgb(215, 145, 0); 
         public static Color TextCrit = Color.FromArgb(220, 50, 50); 
     }
+    public static class UIFonts 
+    {
+        public static Font Regular(float size) => new Font("Microsoft YaHei UI", size, FontStyle.Regular);
+        public static Font Bold(float size) => new Font("Microsoft YaHei UI", size, FontStyle.Bold);
+    }
 
     // =======================================================================
     // 1. 容器组件
